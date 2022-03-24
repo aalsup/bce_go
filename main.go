@@ -14,15 +14,15 @@ func main() {
 	var args = os.Args[1:]
 
 	if len(args) <= 1 {
-		result = process_completion()
+		result = processCompletion()
 	} else {
-		result = process_cli(args)
+		result = processCli(args)
 	}
 
 	os.Exit(result)
 }
 
-func process_completion() int {
+func processCompletion() int {
 	//var command_name string
 	//var current_word string
 	//var previous_word string
@@ -130,7 +130,7 @@ func process_completion() int {
 	return 0
 }
 
-func process_cli(args []string) int {
+func processCli(args []string) int {
 	return 0
 }
 
