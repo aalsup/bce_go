@@ -15,24 +15,24 @@ func pruneCommand(cmd BceCommand, input BashInput) BceCommand {
 func pruneSubCommands(cmd BceCommand, words []string) BceCommand {
 	var removeIdx []int
 	// prune sibling sub-commands
-	for i, subCmd := range cmd.subCommands {
+	for i, subCmd := range cmd.SubCommands {
 		// check if its in the word list
-		subCmd.isPresentOnCmdLine = contains(words, subCmd.name)
-		if !subCmd.isPresentOnCmdLine {
+		subCmd.IsPresentOnCmdLine = contains(words, subCmd.Name)
+		if !subCmd.IsPresentOnCmdLine {
 			// try harder
-			for _, alias := range subCmd.aliases {
-				if contains(words, alias.name) {
-					subCmd.isPresentOnCmdLine = true
+			for _, alias := range subCmd.Aliases {
+				if contains(words, alias.Name) {
+					subCmd.IsPresentOnCmdLine = true
 					break
 				}
 			}
 		}
-		if subCmd.isPresentOnCmdLine {
+		if subCmd.IsPresentOnCmdLine {
 			// update the parent cmd's slice
-			cmd.subCommands[i] = subCmd
+			cmd.SubCommands[i] = subCmd
 			// remove the sub-command's siblings
-			for j, sibling := range cmd.subCommands {
-				if subCmd.uuid != sibling.uuid {
+			for j, sibling := range cmd.SubCommands {
+				if subCmd.Uuid != sibling.Uuid {
 					removeIdx = append(removeIdx, j)
 				}
 			}
@@ -42,46 +42,46 @@ func pruneSubCommands(cmd BceCommand, words []string) BceCommand {
 	// remove the IDs we've collected
 	for i := len(removeIdx) - 1; i >= 0; i-- {
 		// replace the deleted element with the last element
-		//cmd.subCommands[i] = cmd.subCommands[len(cmd.subCommands)-1]
-		//cmd.subCommands = cmd.subCommands[:len(cmd.subCommands)-1]
+		//cmd.SubCommands[i] = cmd.SubCommands[len(cmd.SubCommands)-1]
+		//cmd.SubCommands = cmd.SubCommands[:len(cmd.SubCommands)-1]
 		idx := removeIdx[i]
-		log.Println("Removing sub-cmd:", cmd.subCommands[idx].name)
-		if (len(cmd.subCommands) == 1) && (idx == 0) {
-			cmd.subCommands = nil
-		} else if idx == len(cmd.subCommands)-1 {
-			cmd.subCommands = cmd.subCommands[:idx]
+		log.Println("Removing sub-cmd:", cmd.SubCommands[idx].Name)
+		if (len(cmd.SubCommands) == 1) && (idx == 0) {
+			cmd.SubCommands = nil
+		} else if idx == len(cmd.SubCommands)-1 {
+			cmd.SubCommands = cmd.SubCommands[:idx]
 		} else {
-			cmd.subCommands = append(cmd.subCommands[:idx], cmd.subCommands[idx+1:]...)
+			cmd.SubCommands = append(cmd.SubCommands[:idx], cmd.SubCommands[idx+1:]...)
 		}
 	}
 
 	// recurse over remaining sub-cmds
 	removeIdx = nil
-	for i, subCmd := range cmd.subCommands {
+	for i, subCmd := range cmd.SubCommands {
 		subCmd = pruneArguments(subCmd, words)
 		subCmd = pruneSubCommands(subCmd, words)
 
 		// if sub-cmd is present and has no children, it has been used and should be removed
-		if subCmd.isPresentOnCmdLine && (len(subCmd.subCommands) == 0) && (len(subCmd.args) == 0) {
+		if subCmd.IsPresentOnCmdLine && (len(subCmd.SubCommands) == 0) && (len(subCmd.Args) == 0) {
 			removeIdx = append(removeIdx, i)
 		} else {
 			// update the parent
-			cmd.subCommands[i] = subCmd
+			cmd.SubCommands[i] = subCmd
 		}
 	}
 
 	for i := len(removeIdx) - 1; i >= 0; i-- {
 		// replace the deleted element with the last element
-		//cmd.subCommands[i] = cmd.subCommands[len(cmd.subCommands)-1]
-		//cmd.subCommands = cmd.subCommands[:len(cmd.subCommands)-1]
+		//cmd.SubCommands[i] = cmd.SubCommands[len(cmd.SubCommands)-1]
+		//cmd.SubCommands = cmd.SubCommands[:len(cmd.SubCommands)-1]
 		idx := removeIdx[i]
-		log.Println("Removing sub-cmd:", cmd.subCommands[idx].name)
-		if (len(cmd.subCommands) == 1) && (idx == 0) {
-			cmd.subCommands = nil
-		} else if idx == len(cmd.subCommands)-1 {
-			cmd.subCommands = cmd.subCommands[:idx]
+		log.Println("Removing sub-cmd:", cmd.SubCommands[idx].Name)
+		if (len(cmd.SubCommands) == 1) && (idx == 0) {
+			cmd.SubCommands = nil
+		} else if idx == len(cmd.SubCommands)-1 {
+			cmd.SubCommands = cmd.SubCommands[:idx]
 		} else {
-			cmd.subCommands = append(cmd.subCommands[:idx], cmd.subCommands[idx+1:]...)
+			cmd.SubCommands = append(cmd.SubCommands[:idx], cmd.SubCommands[idx+1:]...)
 		}
 	}
 	return cmd
@@ -89,19 +89,19 @@ func pruneSubCommands(cmd BceCommand, words []string) BceCommand {
 
 func pruneArguments(cmd BceCommand, words []string) BceCommand {
 	var removeIdx []int
-	for i, arg := range cmd.args {
+	for i, arg := range cmd.Args {
 		// check if arg is in word list
-		if contains(words, arg.shortName) || contains(words, arg.longName) {
-			arg.isPresentOnCmdLine = true
+		if contains(words, arg.ShortName) || contains(words, arg.LongName) {
+			arg.IsPresentOnCmdLine = true
 			// check if arg has options
 			shouldRemoveArg := false
-			if len(arg.opts) == 0 {
+			if len(arg.Opts) == 0 {
 				shouldRemoveArg = true
 			} else {
 				// possibly remove the arg, if an option has already been supplied
 				shouldRemoveArg = true
-				for _, opt := range arg.opts {
-					shouldRemoveArg = contains(words, opt.name)
+				for _, opt := range arg.Opts {
+					shouldRemoveArg = contains(words, opt.Name)
 					if shouldRemoveArg {
 						break
 					}
@@ -115,16 +115,16 @@ func pruneArguments(cmd BceCommand, words []string) BceCommand {
 
 	for i := len(removeIdx) - 1; i >= 0; i-- {
 		// replace the deleted element with the last element
-		//cmd.args[i] = cmd.args[len(cmd.args)-1]
-		//cmd.args = cmd.args[:len(cmd.args)-1]
+		//cmd.Args[i] = cmd.Args[len(cmd.Args)-1]
+		//cmd.Args = cmd.Args[:len(cmd.Args)-1]
 		idx := removeIdx[i]
-		log.Println("Removing arg:", cmd.args[idx].longName)
-		if (len(cmd.args) == 1) && (idx == 0) {
-			cmd.args = nil
-		} else if idx == len(cmd.args)-1 {
-			cmd.args = cmd.args[:idx]
+		log.Println("Removing arg:", cmd.Args[idx].LongName)
+		if (len(cmd.Args) == 1) && (idx == 0) {
+			cmd.Args = nil
+		} else if idx == len(cmd.Args)-1 {
+			cmd.Args = cmd.Args[:idx]
 		} else {
-			cmd.args = append(cmd.args[:idx], cmd.args[idx+1:]...)
+			cmd.Args = append(cmd.Args[:idx], cmd.Args[idx+1:]...)
 		}
 	}
 	return cmd
@@ -139,10 +139,10 @@ func CollectRequiredRecommendations(cmd BceCommand, currentWord string, previous
 		return results
 	}
 
-	// if argType is NONE, don't expect options
-	if arg.argType != "NONE" {
-		for _, opt := range arg.opts {
-			results = append(results, opt.name)
+	// if ArgType is NONE, don't expect options
+	if arg.ArgType != "NONE" {
+		for _, opt := range arg.Opts {
+			results = append(results, opt.Name)
 		}
 	}
 	return results
@@ -151,9 +151,9 @@ func CollectRequiredRecommendations(cmd BceCommand, currentWord string, previous
 func GetCurrentArg(cmd BceCommand, currentWord string) *BceCommandArg {
 	var foundArg *BceCommandArg = nil
 
-	for _, arg := range cmd.args {
-		if arg.isPresentOnCmdLine {
-			if (arg.longName == currentWord) || (arg.shortName == currentWord) {
+	for _, arg := range cmd.Args {
+		if arg.IsPresentOnCmdLine {
+			if (arg.LongName == currentWord) || (arg.ShortName == currentWord) {
 				foundArg = &arg
 				break
 			}
@@ -167,16 +167,16 @@ func CollectOptionalRecommendations(cmd BceCommand, currentWord string, previous
 	var results []string
 
 	// collect all sub-cmds
-	for _, subCmd := range cmd.subCommands {
-		if !subCmd.isPresentOnCmdLine {
-			var recommendation string = subCmd.name
-			if len(subCmd.aliases) > 0 {
+	for _, subCmd := range cmd.SubCommands {
+		if !subCmd.IsPresentOnCmdLine {
+			var recommendation string = subCmd.Name
+			if len(subCmd.Aliases) > 0 {
 				var shortest string
-				for _, alias := range subCmd.aliases {
+				for _, alias := range subCmd.Aliases {
 					if len(shortest) == 0 {
-						shortest = alias.name
-					} else if len(alias.name) < len(shortest) {
-						shortest = alias.name
+						shortest = alias.Name
+					} else if len(alias.Name) < len(shortest) {
+						shortest = alias.Name
 					}
 				}
 				recommendation = recommendation + " (" + shortest + ")"
@@ -187,23 +187,23 @@ func CollectOptionalRecommendations(cmd BceCommand, currentWord string, previous
 		results = append(results, subResults...)
 	}
 
-	// collect all the args
-	for _, arg := range cmd.args {
-		if !arg.isPresentOnCmdLine {
+	// collect all the Args
+	for _, arg := range cmd.Args {
+		if !arg.IsPresentOnCmdLine {
 			var recommendation string
-			if len(arg.longName) > 0 {
-				recommendation = arg.longName
-				if len(arg.shortName) > 0 {
-					recommendation = recommendation + " (" + arg.shortName + ")"
+			if len(arg.LongName) > 0 {
+				recommendation = arg.LongName
+				if len(arg.ShortName) > 0 {
+					recommendation = recommendation + " (" + arg.ShortName + ")"
 				}
 			} else {
-				recommendation = arg.shortName
+				recommendation = arg.ShortName
 			}
 			results = append(results, recommendation)
 		} else {
 			// collect all the options
-			for _, opt := range arg.opts {
-				results = append(results, opt.name)
+			for _, opt := range arg.Opts {
+				results = append(results, opt.Name)
 			}
 		}
 	}

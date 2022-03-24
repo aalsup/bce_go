@@ -1,52 +1,43 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
+	"io/ioutil"
 	"log"
 )
 
-type CliOperation uint8
-type CliFormat uint8
+type BceCommandWrapper struct {
+	Command BceCommand `json:"command"`
+}
 
-const (
-	OpNone CliOperation = iota
-	OpHelp
-	OpImport
-	OpExport
-)
-
-const (
-	FormatSqlite CliFormat = iota
-	FormatJson
-)
-
-func processCliImpl(args []string) error {
+func processCliImpl() error {
 	var err error
 
 	fHelp := flag.Bool("help", false, "get help")
-	fExport := flag.Bool("export", false, "export")
+	fExport := flag.String("export", "", "export command")
 	fImport := flag.Bool("import", false, "import")
 	fFormat := flag.String("format", "sqlite", "file format")
-	fFilename := flag.String("file", "", "file name")
+	fFilename := flag.String("filename", "", "file Name")
 	fUrl := flag.String("url", "", "URL")
 	flag.Parse()
-	commandName := flag.Arg(0)
+	//commandName := flag.Arg(0)
 
 	if *fHelp {
 		showUsage()
 		return nil
 	}
 
-	if *fExport {
+	if len(*fExport) > 0 {
 		// ensure we have a filename and a format
 		if (len(*fFormat) == 0) || (len(*fFilename) == 0) {
 			return errors.New("export requires values for format and file")
 		}
 		if *fFormat == "json" {
-			err = processExportJson(commandName, *fFilename)
+			err = processExportJson(*fExport, *fFilename)
 		} else {
-			err = processExportSqlite(commandName, *fFilename)
+			err = processExportSqlite(*fExport, *fFilename)
 		}
 	} else if *fImport {
 		// ensure we have a filename or url
@@ -82,9 +73,36 @@ func processExportSqlite(commandName string, filename string) error {
 }
 
 func processExportJson(commandName string, filename string) error {
-	var err error
+	// open the source database
+	srcConn, err := DbOpen(DbFilename)
+	if err != nil {
+		return err
+	}
 
-	return err
+	// explicitly start a transaction, since this will be done automatically (per statement) otherwise
+	_, err = srcConn.Exec("BEGIN TRANSACTION;")
+	if err != nil {
+		return err
+	}
+
+	// load the command hierarchy
+	cmd, err := DbQueryCommand(srcConn, commandName)
+	if err != nil {
+		return err
+	}
+	log.Println(cmd)
+
+	wrapper := BceCommandWrapper{*cmd}
+	data, err := json.MarshalIndent(wrapper, "", "  ")
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(filename, data, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func showUsage() {

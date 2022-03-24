@@ -1,28 +1,30 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/mattn/go-sqlite3"
-	"log"
 	"os"
 )
 
 const DbFilename = "completion.db"
 
 func main() {
-	var result = 0
+	var err error
 	var args = os.Args[1:]
 
 	if len(args) <= 1 {
-		result = processCompletion()
+		err = processCompletion()
 	} else {
-		result = processCli(args)
+		err = processCli()
 	}
 
-	os.Exit(result)
+	if err != nil {
+		os.Exit(1)
+	}
 }
 
-func processCompletion() int {
+func processCompletion() error {
 	//var command_name string
 	//var current_word string
 	//var previous_word string
@@ -32,40 +34,36 @@ func processCompletion() int {
 
 	conn, err := DbOpen(DbFilename)
 	if err != nil {
-		log.Fatal(err)
-		return 1
+		return err
 	}
 	defer DbClose(conn)
 
 	schema_version, err := DbGetSchemaVersion(conn)
 	if err != nil {
-		log.Fatal(err)
-		return 1
+		return err
 	}
 	if schema_version == 0 {
 		// create the schema
 		err = DbCreateSchema(conn)
 		if err != nil {
-			log.Fatal(err)
-			return 1
+			return err
 		}
 		schema_version, err = DbGetSchemaVersion(conn)
 	}
 	if schema_version != DbSchemaVersion {
-		log.Fatal("Schema version %d", schema_version, "does not match expected version", DbSchemaVersion)
-		return 1
+		err := errors.New("Schema version mismatch")
+		return err
 	}
 
 	input, err := CreateCompletionInput()
 	if err != nil {
-		log.Fatal("Unable to load required env variables: " + err.Error())
-		return 1
+		return err
 	}
 
 	pCmdName := GetCommandFromInput(input)
 	if pCmdName == nil {
-		log.Fatal("No command from input: ", input.line)
-		return 1
+		err := errors.New("No command in input")
+		return err
 	}
 	cmdName := *pCmdName
 
@@ -89,8 +87,7 @@ func processCompletion() int {
 	// search for the command directly (load all descendents)
 	cmd, err := DbQueryCommand(conn, cmdName)
 	if err != nil {
-		log.Fatal("Unable to query command. err:", err)
-		return 1
+		return err
 	}
 
 	// end the transaction
@@ -127,11 +124,15 @@ func processCompletion() int {
 
 	printRecommendations(recommendationList)
 
-	return 0
+	return nil
 }
 
-func processCli(args []string) int {
-	return 0
+func processCli() error {
+	err := processCliImpl()
+	if err != nil {
+
+	}
+	return nil
 }
 
 func printCommandTree(cmd BceCommand, level int) {
@@ -140,43 +141,43 @@ func printCommandTree(cmd BceCommand, level int) {
 		fmt.Print("  ")
 	}
 
-	fmt.Println("command:", cmd.name)
-	if len(cmd.aliases) > 0 {
+	fmt.Println("command:", cmd.Name)
+	if len(cmd.Aliases) > 0 {
 		// indent
 		for i := 0; i < level; i++ {
 			fmt.Print("  ")
 		}
-		fmt.Print("  aliases: ")
-		for _, alias := range cmd.aliases {
-			fmt.Print(alias.name, " ")
+		fmt.Print("  Aliases: ")
+		for _, alias := range cmd.Aliases {
+			fmt.Print(alias.Name, " ")
 		}
 		fmt.Println()
 	}
 
-	if len(cmd.args) > 0 {
-		for _, arg := range cmd.args {
+	if len(cmd.Args) > 0 {
+		for _, arg := range cmd.Args {
 			// indent
 			for i := 0; i < level; i++ {
 				fmt.Print("  ")
 			}
-			fmt.Printf("  arg: %s (%s): %s\n", arg.longName, arg.shortName, arg.argType)
+			fmt.Printf("  arg: %s (%s): %s\n", arg.LongName, arg.ShortName, arg.ArgType)
 
-			// print opts
-			if len(arg.opts) > 0 {
-				for _, opt := range arg.opts {
+			// print Opts
+			if len(arg.Opts) > 0 {
+				for _, opt := range arg.Opts {
 					// indent
 					for i := 0; i < level; i++ {
 						fmt.Print("  ")
 					}
-					fmt.Printf("    opt: %s\n", opt.name)
+					fmt.Printf("    opt: %s\n", opt.Name)
 				}
 			}
 		}
 	}
 
 	// print sub-commands
-	if len(cmd.subCommands) > 0 {
-		for _, subCmd := range cmd.subCommands {
+	if len(cmd.SubCommands) > 0 {
+		for _, subCmd := range cmd.SubCommands {
 			printCommandTree(subCmd, level+1)
 		}
 	}

@@ -8,40 +8,40 @@ const DbSchemaVersion = 1
 
 const CreateCompletionCommandSql = ` 
 	CREATE TABLE IF NOT EXISTS command (
-      uuid TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
+      Uuid TEXT PRIMARY KEY,
+      Name TEXT NOT NULL,
       parent_cmd TEXT,
-      FOREIGN KEY(parent_cmd) REFERENCES command(uuid) ON DELETE CASCADE
+      FOREIGN KEY(parent_cmd) REFERENCES command(Uuid) ON DELETE CASCADE
     );
 	CREATE UNIQUE INDEX command_name_idx
- 		ON command (name);
+ 		ON command (Name);
 	CREATE INDEX command_parent_idx
 		ON command (parent_cmd); `
 
 const CreateCompletionCommandAliasSql = `
 	CREATE TABLE IF NOT EXISTS command_alias (
-    	uuid TEXT PRIMARY KEY,
+    	Uuid TEXT PRIMARY KEY,
         cmd_uuid TEXT NOT NULL,
-        name TEXT NOT NULL,
-        FOREIGN KEY(cmd_uuid) REFERENCES command(uuid) ON DELETE CASCADE
+        Name TEXT NOT NULL,
+        FOREIGN KEY(cmd_uuid) REFERENCES command(Uuid) ON DELETE CASCADE
     );
 	CREATE INDEX command_alias_name_idx
-		ON command_alias (name);
+		ON command_alias (Name);
     CREATE INDEX command_alias_cmd_uuid_idx
         ON command_alias (cmd_uuid);
     CREATE UNIQUE INDEX command_alias_cmd_name_idx
-        ON command_alias (cmd_uuid, name);
+        ON command_alias (cmd_uuid, Name);
 `
 const CreateCompletionCommandArgSql = `
 	CREATE TABLE IF NOT EXISTS command_arg (
-		uuid TEXT PRIMARY KEY,
+		Uuid TEXT PRIMARY KEY,
         cmd_uuid TEXT NOT NULL,
         arg_type TEXT NOT NULL
         	CHECK (arg_type IN ('NONE', 'OPTION', 'FILE', 'TEXT')),
-        description TEXT NOT NULL, 
+        Description TEXT NOT NULL, 
         long_name TEXT, 
         short_name TEXT, 
-        FOREIGN KEY(cmd_uuid) REFERENCES command(uuid) ON DELETE CASCADE, 
+        FOREIGN KEY(cmd_uuid) REFERENCES command(Uuid) ON DELETE CASCADE, 
         CHECK ( (long_name IS NOT NULL) OR (short_name IS NOT NULL) ) 
 	); 
 	CREATE INDEX command_arg_cmd_uuid_idx 
@@ -52,15 +52,15 @@ const CreateCompletionCommandArgSql = `
 
 const CreateCompletionCommandOptSql = `
 	CREATE TABLE IF NOT EXISTS command_opt (
-        uuid TEXT PRIMARY KEY, 
+        Uuid TEXT PRIMARY KEY, 
         cmd_arg_uuid TEXT NOT NULL, 
-        name TEXT NOT NULL, 
-		FOREIGN KEY(cmd_arg_uuid) REFERENCES command_arg(uuid) ON DELETE CASCADE 
+        Name TEXT NOT NULL, 
+		FOREIGN KEY(cmd_arg_uuid) REFERENCES command_arg(Uuid) ON DELETE CASCADE 
 	);
 	CREATE INDEX command_opt_cmd_arg_idx 
         ON command_opt (cmd_arg_uuid); 
 	CREATE UNIQUE INDEX command_opt_arg_name_idx 
-        ON command_opt (cmd_arg_uuid, name); 
+        ON command_opt (cmd_arg_uuid, Name); 
 `
 
 func DbOpen(filename string) (*sql.DB, error) {
