@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="bce (export sqlite)" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <module name="bce_go" />
+    <working_directory value="$PROJECT_DIR$" />
+    <parameters value="--export kubectl --format sqlite --filename xyz.db" />
+    <kind value="DIRECTORY" />
+    <package value="bce_go" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$" />
+    <method v="2" />
+  </configuration>
+</component>

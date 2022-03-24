@@ -1,0 +1,14 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run (optional)" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <module name="bce_go" />
+    <working_directory value="$PROJECT_DIR$" />
+    <envs>
+      <env name="COMP_LINE" value="kubectl --namespace=public get pods -o wide" />
+      <env name="COMP_POINT" value="44" />
+    </envs>
+    <kind value="DIRECTORY" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$/main.go" />
+    <method v="2" />
+  </configuration>
+</component>
