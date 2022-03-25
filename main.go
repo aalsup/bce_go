@@ -129,10 +129,7 @@ func processCompletion() error {
 
 func processCli() error {
 	err := processCliImpl()
-	if err != nil {
-
-	}
-	return nil
+	return err
 }
 
 func printCommandTree(cmd BceCommand, level int) {

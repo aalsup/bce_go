@@ -1,3 +1,4 @@
 .idea/
 go.sum
 kubectl.json
+xyz.db

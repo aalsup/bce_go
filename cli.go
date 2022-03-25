@@ -6,6 +6,7 @@ import (
 	"flag"
 	"io/ioutil"
 	"log"
+	"os"
 )
 
 type BceCommandWrapper struct {
@@ -22,7 +23,6 @@ func processCliImpl() error {
 	fFilename := flag.String("filename", "", "file Name")
 	fUrl := flag.String("url", "", "URL")
 	flag.Parse()
-	//commandName := flag.Arg(0)
 
 	if *fHelp {
 		showUsage()
@@ -55,6 +55,7 @@ func processExportSqlite(commandName string, filename string) error {
 	if err != nil {
 		return err
 	}
+	defer DbClose(srcConn)
 
 	// explicitly start a transaction, since this will be done automatically (per statement) otherwise
 	_, err = srcConn.Exec("BEGIN TRANSACTION;")
@@ -67,7 +68,38 @@ func processExportSqlite(commandName string, filename string) error {
 	if err != nil {
 		return err
 	}
-	log.Println(cmd)
+
+	// open the destination database
+	_, err = os.Stat(filename)
+	if err == nil {
+		err = os.Remove(filename)
+	}
+	destConn, err := DbOpen(filename)
+	if err != nil {
+		return err
+	}
+	defer DbClose(destConn)
+
+	// create the schema
+	err = DbCreateSchema(destConn)
+	if err != nil {
+		return err
+	}
+
+	// explicitly start a transaction, since this will be done automatically (per statement) otherwise
+	_, err = destConn.Exec("BEGIN TRANSACTION;")
+	if err != nil {
+		return err
+	}
+
+	// insert the BceCommand (recursively to children)
+	err = DbStoreCommand(destConn, *cmd)
+	if err != nil {
+		return err
+	}
+
+	// commit the transaction
+	_, err = destConn.Exec("COMMIT;")
 
 	return err
 }

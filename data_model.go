@@ -38,6 +38,34 @@ const CmdOptReadSql = `
 	ORDER BY co.Name
 `
 
+const CmdWriteSql = `
+	INSERT INTO command
+		(uuid, name, parent_cmd)
+	VALUES 
+		(?1, ?2, ?3)
+`
+
+const CmdWriteAliasSql = `
+    INSERT INTO command_alias
+    	(uuid, cmd_uuid, name)
+    VALUES
+		(?1, ?2, ?3)
+`
+
+const CmdWriteArgSql = `
+    INSERT INTO command_arg
+        (uuid, cmd_uuid, arg_type, description, long_name, short_name)
+    VALUES
+		(?1, ?2, ?3, ?4, ?5, ?6)
+`
+
+const CmdWriteOptSql = `
+	INSERT INTO command_opt
+		(uuid, cmd_arg_uuid, name)
+	VALUES
+		(?1, ?2, ?3)
+`
+
 type BceCommand struct {
 	Uuid               string            `json:"uuid"`
 	Name               string            `json:"name"`
@@ -239,4 +267,71 @@ func DbQueryCommandOpts(conn *sql.DB, argUuid string) ([]BceCommandOpt, error) {
 	}
 
 	return opts, nil
+}
+
+func DbStoreCommand(conn *sql.DB, cmd BceCommand) error {
+	// insert the command
+	stmt, err := conn.Prepare(CmdWriteSql)
+	if err == nil {
+		_, err = stmt.Exec(cmd.Uuid, cmd.Name, cmd.ParentCmdUuid)
+	}
+	if err != nil {
+		return err
+	}
+
+	// insert the aliases
+	for _, alias := range cmd.Aliases {
+		err = DbStoreCommandAlias(conn, alias)
+		if err != nil {
+			return err
+		}
+	}
+
+	// insert the args
+	for _, arg := range cmd.Args {
+		err = DbStoreCommandArg(conn, arg)
+		if err != nil {
+			return err
+		}
+	}
+
+	return err
+}
+
+func DbStoreCommandAlias(conn *sql.DB, alias BceCommandAlias) error {
+	// insert the alias
+	stmt, err := conn.Prepare(CmdWriteAliasSql)
+	if err == nil {
+		_, err = stmt.Exec(alias.Uuid, alias.CmdUuid, alias.Name)
+	}
+	return err
+}
+
+func DbStoreCommandArg(conn *sql.DB, arg BceCommandArg) error {
+	// insert the arg
+	stmt, err := conn.Prepare(CmdWriteArgSql)
+	if err == nil {
+		_, err = stmt.Exec(arg.Uuid, arg.CmdUuid, arg.ArgType, arg.Description, arg.LongName, arg.ShortName)
+	}
+	if err != nil {
+		return err
+	}
+
+	// insert the opts
+	for _, opt := range arg.Opts {
+		err = DbStoreCommandOpt(conn, opt)
+		if err != nil {
+			return err
+		}
+	}
+	return err
+}
+
+func DbStoreCommandOpt(conn *sql.DB, opt BceCommandOpt) error {
+	// insert the opt
+	stmt, err := conn.Prepare(CmdWriteOptSql)
+	if err == nil {
+		_, err = stmt.Exec(opt.Uuid, opt.ArgUuid, opt.Name)
+	}
+	return err
 }
