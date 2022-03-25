@@ -29,8 +29,8 @@ const (
 )
 
 func CreateCompletionInput() (*BashInput, error) {
-	line := os.Getenv(BashLineVar)
-	if len(line) == 0 {
+	cmdLine := os.Getenv(BashLineVar)
+	if len(cmdLine) == 0 {
 		return nil, errors.New("missing BASH env variable: " + BashLineVar)
 	}
 	cursorPosStr := os.Getenv(BashCursorVar)
@@ -41,10 +41,10 @@ func CreateCompletionInput() (*BashInput, error) {
 	if err != nil {
 		return nil, err
 	}
-	commandName := getCommandNameFromInput(line)
-	currentWord := getCurrentWord(line, cursorPos)
-	previousWord := getPreviousWord(line, cursorPos)
-	input := BashInput{cursorPos, line, commandName, currentWord, previousWord}
+	commandName := getCommandNameFromInput(cmdLine)
+	currentWord := getCurrentWord(cmdLine, cursorPos)
+	previousWord := getPreviousWord(cmdLine, cursorPos)
+	input := BashInput{cursorPos, cmdLine, commandName, currentWord, previousWord}
 	return &input, nil
 }
 
@@ -59,7 +59,7 @@ func getCommandNameFromInput(cmdLine string) *string {
 
 func getCurrentWord(cmdLine string, cursorPosition int) *string {
 	list := BashInputToList(cmdLine, cursorPosition)
-	if len(list) > 0 {
+	if len(list) >= 1 {
 		return &list[len(list)-1]
 	} else {
 		return nil
@@ -68,7 +68,7 @@ func getCurrentWord(cmdLine string, cursorPosition int) *string {
 
 func getPreviousWord(cmdLine string, cursorPosition int) *string {
 	list := BashInputToList(cmdLine, cursorPosition)
-	if len(list) > 1 {
+	if len(list) >= 2 {
 		return &list[len(list)-2]
 	} else {
 		return nil
