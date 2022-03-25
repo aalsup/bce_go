@@ -19,14 +19,23 @@ type BashInput struct {
 	PreviousWord   *string
 }
 
+type BashParseState uint8
+
+const (
+	NADA BashParseState = iota
+	InWord
+	InQuote
+	InDblQuote
+)
+
 func CreateCompletionInput() (*BashInput, error) {
 	line := os.Getenv(BashLineVar)
 	if len(line) == 0 {
-		return nil, errors.New("Missing BASH env variable: " + BashLineVar)
+		return nil, errors.New("missing BASH env variable: " + BashLineVar)
 	}
 	cursorPosStr := os.Getenv(BashCursorVar)
 	if len(cursorPosStr) == 0 {
-		return nil, errors.New("Missing BASH env variable: " + BashCursorVar)
+		return nil, errors.New("missing BASH env variable: " + BashCursorVar)
 	}
 	cursorPos, err := strconv.Atoi(cursorPosStr)
 	if err != nil {
@@ -66,49 +75,40 @@ func getPreviousWord(cmdLine string, cursorPosition int) *string {
 	}
 }
 
-type BashParseState uint8
-
-const (
-	NADA BashParseState = iota
-	IN_WORD
-	IN_QUOTE
-	IN_DBL_QUOTE
-)
-
 func BashInputToList(cmdLine string, maxLen int) []string {
 	var list []string
 
-	var state BashParseState = NADA
-	var startOfWord int = 0
-	var i int = 0
+	var state = NADA
+	var startOfWord = 0
+	var i = 0
 	var c rune = 0
 	for i, c = range cmdLine {
-		var gotWord bool = false
+		var gotWord = false
 		switch state {
 		case NADA:
 			if !unicode.IsSpace(c) {
 				// transition to new state
 				switch c {
 				case '"':
-					state = IN_DBL_QUOTE
+					state = InDblQuote
 					startOfWord = i + 1
 				case '\'':
-					state = IN_QUOTE
+					state = InQuote
 					startOfWord = i + 1
 				default:
-					state = IN_WORD
+					state = InWord
 					startOfWord = i
 				}
 			}
-		case IN_WORD:
+		case InWord:
 			// word ends with whitespace or equals (=)
 			if unicode.IsSpace(c) || (c == '=') {
 				gotWord = true
 			}
-		case IN_QUOTE:
+		case InQuote:
 			// keep going until quote
 			gotWord = c == '\''
-		case IN_DBL_QUOTE:
+		case InDblQuote:
 			// keep going until double-quote
 			gotWord = c == '"'
 		}

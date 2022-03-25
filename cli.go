@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-type BceCommandWrapper struct {
+type BceCommandJsonWrapper struct {
 	Command BceCommand `json:"command"`
 }
 
@@ -149,7 +149,7 @@ func processExportJson(commandName string, filename string) error {
 	}
 	log.Println(cmd)
 
-	wrapper := BceCommandWrapper{*cmd}
+	wrapper := BceCommandJsonWrapper{*cmd}
 	data, err := json.MarshalIndent(wrapper, "", "  ")
 	if err != nil {
 		return err

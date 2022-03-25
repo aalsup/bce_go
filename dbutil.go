@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"strconv"
 )
 
 const DbSchemaVersion = 1
@@ -96,7 +97,10 @@ func DbGetSchemaVersion(conn *sql.DB) (int, error) {
 		return 0, err
 	}
 	if row.Next() {
-		row.Scan(&version)
+		err := row.Scan(&version)
+		if err != nil {
+			return 0, err
+		}
 	}
 	row.Close()
 	return version, nil
@@ -123,6 +127,7 @@ func DbCreateSchema(conn *sql.DB) error {
 		return err
 	}
 
-	_, err = conn.Exec("PRAGMA user_version = 1;")
+	query := "PRAGMA user_version = " + strconv.Itoa(DbSchemaVersion) + ";"
+	_, err = conn.Exec(query)
 	return err
 }

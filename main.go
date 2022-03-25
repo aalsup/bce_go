@@ -38,20 +38,20 @@ func processCompletion() error {
 	}
 	defer DbClose(conn)
 
-	schema_version, err := DbGetSchemaVersion(conn)
+	schemaVersion, err := DbGetSchemaVersion(conn)
 	if err != nil {
 		return err
 	}
-	if schema_version == 0 {
+	if schemaVersion == 0 {
 		// create the schema
 		err = DbCreateSchema(conn)
 		if err != nil {
 			return err
 		}
-		schema_version, err = DbGetSchemaVersion(conn)
+		schemaVersion, err = DbGetSchemaVersion(conn)
 	}
-	if schema_version != DbSchemaVersion {
-		err := errors.New("Schema version mismatch")
+	if schemaVersion != DbSchemaVersion {
+		err := errors.New("schema version mismatch")
 		return err
 	}
 
