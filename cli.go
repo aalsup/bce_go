@@ -118,7 +118,7 @@ func processExportSqlite(commandName string, filename string) error {
 	}
 
 	// insert the BceCommand (recursively to children)
-	err = DbStoreCommand(destConn, *cmd)
+	err = DbInsertCommand(destConn, *cmd)
 	if err != nil {
 		return err
 	}

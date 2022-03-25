@@ -7,7 +7,7 @@ import (
 
 const DbSchemaVersion = 1
 
-const CreateCompletionCommandSql = ` 
+const sqlCreateCompletionCommand = ` 
 	CREATE TABLE IF NOT EXISTS command (
       Uuid TEXT PRIMARY KEY,
       Name TEXT NOT NULL,
@@ -19,7 +19,7 @@ const CreateCompletionCommandSql = `
 	CREATE INDEX command_parent_idx
 		ON command (parent_cmd); `
 
-const CreateCompletionCommandAliasSql = `
+const sqlCreateCompletionCommandAlias = `
 	CREATE TABLE IF NOT EXISTS command_alias (
     	Uuid TEXT PRIMARY KEY,
         cmd_uuid TEXT NOT NULL,
@@ -33,7 +33,7 @@ const CreateCompletionCommandAliasSql = `
     CREATE UNIQUE INDEX command_alias_cmd_name_idx
         ON command_alias (cmd_uuid, Name);
 `
-const CreateCompletionCommandArgSql = `
+const sqlCreateCompletionCommandArg = `
 	CREATE TABLE IF NOT EXISTS command_arg (
 		Uuid TEXT PRIMARY KEY,
         cmd_uuid TEXT NOT NULL,
@@ -51,7 +51,7 @@ const CreateCompletionCommandArgSql = `
         ON command_arg (cmd_uuid, long_name); 
 `
 
-const CreateCompletionCommandOptSql = `
+const sqlCreateCompletionCommandOpt = `
 	CREATE TABLE IF NOT EXISTS command_opt (
         Uuid TEXT PRIMARY KEY, 
         cmd_arg_uuid TEXT NOT NULL, 
@@ -107,22 +107,22 @@ func DbGetSchemaVersion(conn *sql.DB) (int, error) {
 }
 
 func DbCreateSchema(conn *sql.DB) error {
-	_, err := conn.Exec(CreateCompletionCommandSql)
+	_, err := conn.Exec(sqlCreateCompletionCommand)
 	if err != nil {
 		return err
 	}
 
-	_, err = conn.Exec(CreateCompletionCommandAliasSql)
+	_, err = conn.Exec(sqlCreateCompletionCommandAlias)
 	if err != nil {
 		return err
 	}
 
-	_, err = conn.Exec(CreateCompletionCommandArgSql)
+	_, err = conn.Exec(sqlCreateCompletionCommandArg)
 	if err != nil {
 		return err
 	}
 
-	_, err = conn.Exec(CreateCompletionCommandOptSql)
+	_, err = conn.Exec(sqlCreateCompletionCommandOpt)
 	if err != nil {
 		return err
 	}
