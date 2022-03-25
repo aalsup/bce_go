@@ -12,8 +12,11 @@ const BashCursorVar = "COMP_POINT"
 const BashMaxLineSize = 4096
 
 type BashInput struct {
-	line            string
-	cursor_position int
+	CursorPosition int
+	CmdLine        string
+	CmdName        *string
+	CurrentWord    *string
+	PreviousWord   *string
 }
 
 func CreateCompletionInput() (*BashInput, error) {
@@ -21,21 +24,23 @@ func CreateCompletionInput() (*BashInput, error) {
 	if len(line) == 0 {
 		return nil, errors.New("Missing BASH env variable: " + BashLineVar)
 	}
-	cursor_pos_str := os.Getenv(BashCursorVar)
-	if len(cursor_pos_str) == 0 {
+	cursorPosStr := os.Getenv(BashCursorVar)
+	if len(cursorPosStr) == 0 {
 		return nil, errors.New("Missing BASH env variable: " + BashCursorVar)
 	}
-	cursor_pos, err := strconv.Atoi(cursor_pos_str)
+	cursorPos, err := strconv.Atoi(cursorPosStr)
 	if err != nil {
 		return nil, err
 	}
-
-	input := BashInput{line, cursor_pos}
+	commandName := getCommandNameFromInput(line)
+	currentWord := getCurrentWord(line, cursorPos)
+	previousWord := getPreviousWord(line, cursorPos)
+	input := BashInput{cursorPos, line, commandName, currentWord, previousWord}
 	return &input, nil
 }
 
-func GetCommandFromInput(input *BashInput) *string {
-	list := BashInputToList(input.line, BashMaxLineSize)
+func getCommandNameFromInput(cmdLine string) *string {
+	list := BashInputToList(cmdLine, BashMaxLineSize)
 	if len(list) > 0 {
 		return &list[0]
 	} else {
@@ -43,8 +48,8 @@ func GetCommandFromInput(input *BashInput) *string {
 	}
 }
 
-func GetCurrentWord(input *BashInput) *string {
-	list := BashInputToList(input.line, input.cursor_position)
+func getCurrentWord(cmdLine string, cursorPosition int) *string {
+	list := BashInputToList(cmdLine, cursorPosition)
 	if len(list) > 0 {
 		return &list[len(list)-1]
 	} else {
@@ -52,8 +57,8 @@ func GetCurrentWord(input *BashInput) *string {
 	}
 }
 
-func GetPreviousWord(input *BashInput) *string {
-	list := BashInputToList(input.line, input.cursor_position)
+func getPreviousWord(cmdLine string, cursorPosition int) *string {
+	list := BashInputToList(cmdLine, cursorPosition)
 	if len(list) > 1 {
 		return &list[len(list)-2]
 	} else {

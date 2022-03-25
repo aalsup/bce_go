@@ -59,21 +59,15 @@ func processCompletion() error {
 	if err != nil {
 		return err
 	}
-
-	pCmdName := GetCommandFromInput(input)
-	if pCmdName == nil {
-		err := errors.New("No command in input")
+	if input.CmdName == nil {
+		err := errors.New("no command in input")
 		return err
 	}
-	cmdName := *pCmdName
 
-	pCurrentWord := GetCurrentWord(input)
-	pPreviousWord := GetPreviousWord(input)
-
-	fmt.Println("input:", input.line)
-	fmt.Println("command:", cmdName)
-	fmt.Println("current word:", *pCurrentWord)
-	fmt.Println("previous word:", *pPreviousWord)
+	fmt.Println("input:", input.CmdLine)
+	fmt.Println("command:", input.CmdName)
+	fmt.Println("current word:", input.CurrentWord)
+	fmt.Println("previous word:", input.PreviousWord)
 
 	// explicitly start a transaction, since this will be done automatically (per statement) otherwise
 	/*
@@ -85,7 +79,7 @@ func processCompletion() error {
 	*/
 
 	// search for the command directly (load all descendents)
-	cmd, err := DbQueryCommand(conn, cmdName)
+	cmd, err := DbQueryCommand(conn, *input.CmdName)
 	if err != nil {
 		return err
 	}
@@ -100,20 +94,20 @@ func processCompletion() error {
 	*/
 
 	fmt.Println("\nCommand Tree (Database)")
-	printCommandTree(*cmd, 0)
+	printCommandTree(cmd, 0)
 
 	// remove non-relevant command data
 	*cmd = pruneCommand(*cmd, *input)
 
 	fmt.Println("\nCommand tree (Pruned)")
-	printCommandTree(*cmd, 0)
+	printCommandTree(cmd, 0)
 
 	// build the command recommendations
 	var hasRequired = true
-	var recommendationList = CollectRequiredRecommendations(*cmd, *pCurrentWord, *pPreviousWord)
+	var recommendationList = CollectRequiredRecommendations(*cmd, *input)
 	if len(recommendationList) == 0 {
 		hasRequired = false
-		recommendationList = CollectOptionalRecommendations(*cmd, *pCurrentWord, *pPreviousWord)
+		recommendationList = CollectOptionalRecommendations(*cmd, *input)
 	}
 
 	if hasRequired {
@@ -132,7 +126,7 @@ func processCli() error {
 	return err
 }
 
-func printCommandTree(cmd BceCommand, level int) {
+func printCommandTree(cmd *BceCommand, level int) {
 	// indent
 	for i := 0; i < level; i++ {
 		fmt.Print("  ")
@@ -175,7 +169,7 @@ func printCommandTree(cmd BceCommand, level int) {
 	// print sub-commands
 	if len(cmd.SubCommands) > 0 {
 		for _, subCmd := range cmd.SubCommands {
-			printCommandTree(subCmd, level+1)
+			printCommandTree(&subCmd, level+1)
 		}
 	}
 }

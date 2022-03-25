@@ -3,8 +3,8 @@ package main
 import "log"
 
 func pruneCommand(cmd BceCommand, input BashInput) BceCommand {
-	// build the list of words from the command line
-	words := BashInputToList(input.line, BashMaxLineSize)
+	// build the list of words from the command CmdLine
+	words := BashInputToList(input.CmdLine, BashMaxLineSize)
 
 	cmd = pruneArguments(cmd, words)
 	cmd = pruneSubCommands(cmd, words)
@@ -28,7 +28,7 @@ func pruneSubCommands(cmd BceCommand, words []string) BceCommand {
 			}
 		}
 		if subCmd.IsPresentOnCmdLine {
-			// update the parent cmd's slice
+			// update the parent cmd
 			cmd.SubCommands[i] = subCmd
 			// remove the sub-command's siblings
 			for j, sibling := range cmd.SubCommands {
@@ -93,6 +93,8 @@ func pruneArguments(cmd BceCommand, words []string) BceCommand {
 		// check if arg is in word list
 		if contains(words, arg.ShortName) || contains(words, arg.LongName) {
 			arg.IsPresentOnCmdLine = true
+			// update the parent
+			cmd.Args[i] = arg
 			// check if arg has options
 			shouldRemoveArg := false
 			if len(arg.Opts) == 0 {
@@ -130,11 +132,11 @@ func pruneArguments(cmd BceCommand, words []string) BceCommand {
 	return cmd
 }
 
-func CollectRequiredRecommendations(cmd BceCommand, currentWord string, previousWord string) []string {
+func CollectRequiredRecommendations(cmd BceCommand, input BashInput) []string {
 	var results []string
 
 	// if a current argument is selected, its options should be displayed 1st
-	arg := GetCurrentArg(cmd, currentWord)
+	arg := GetCurrentArg(cmd, *input.CurrentWord)
 	if arg == nil {
 		return results
 	}
@@ -148,22 +150,7 @@ func CollectRequiredRecommendations(cmd BceCommand, currentWord string, previous
 	return results
 }
 
-func GetCurrentArg(cmd BceCommand, currentWord string) *BceCommandArg {
-	var foundArg *BceCommandArg = nil
-
-	for _, arg := range cmd.Args {
-		if arg.IsPresentOnCmdLine {
-			if (arg.LongName == currentWord) || (arg.ShortName == currentWord) {
-				foundArg = &arg
-				break
-			}
-		}
-	}
-
-	return foundArg
-}
-
-func CollectOptionalRecommendations(cmd BceCommand, currentWord string, previousWord string) []string {
+func CollectOptionalRecommendations(cmd BceCommand, input BashInput) []string {
 	var results []string
 
 	// collect all sub-cmds
@@ -183,7 +170,7 @@ func CollectOptionalRecommendations(cmd BceCommand, currentWord string, previous
 			}
 			results = append(results, recommendation)
 		}
-		subResults := CollectOptionalRecommendations(subCmd, currentWord, previousWord)
+		subResults := CollectOptionalRecommendations(subCmd, input)
 		results = append(results, subResults...)
 	}
 
@@ -218,4 +205,30 @@ func contains(s []string, str string) bool {
 		}
 	}
 	return false
+}
+
+func GetCurrentArg(cmd BceCommand, currentWord string) *BceCommandArg {
+	var foundArg *BceCommandArg = nil
+
+	for _, arg := range cmd.Args {
+		if arg.IsPresentOnCmdLine {
+			if (arg.LongName == currentWord) || (arg.ShortName == currentWord) {
+				foundArg = &arg
+				break
+			}
+		}
+	}
+
+	if foundArg != nil {
+		return foundArg
+	}
+
+	// recurse for sub-commands
+	for _, subCmd := range cmd.SubCommands {
+		foundArg = GetCurrentArg(subCmd, currentWord)
+		if foundArg != nil {
+			break
+		}
+	}
+	return foundArg
 }

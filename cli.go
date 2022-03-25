@@ -44,9 +44,34 @@ func processCliImpl() error {
 		if (len(*fFilename) == 0) && (len(*fUrl) == 0) {
 			return errors.New("import requires values for either file or url")
 		}
+		if len(*fFilename) > 0 {
+			if *fFormat == "json" {
+				err = processImportJsonFile(*fFilename)
+			} else {
+				err = processImportSqlite(*fFilename)
+			}
+		} else {
+			if *fFormat == "json" {
+				err = processImportJsonUrl(*fUrl)
+			} else {
+				return errors.New("import from url must be json format")
+			}
+		}
 	}
 
 	return err
+}
+
+func processImportJsonUrl(url string) error {
+	return nil
+}
+
+func processImportSqlite(filename string) error {
+	return nil
+}
+
+func processImportJsonFile(filename string) error {
+	return nil
 }
 
 func processExportSqlite(commandName string, filename string) error {

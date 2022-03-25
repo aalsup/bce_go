@@ -186,7 +186,7 @@ func DbQuerySubCommands(conn *sql.DB, parentCmdUuid string) ([]BceCommand, error
 			return nil, err
 		}
 
-		// TODO: populate child Aliases
+		// populate child Aliases
 		subCmd.Aliases, err = DbQueryCommandAliases(conn, subCmd.Uuid)
 		if err != nil {
 			return nil, err
