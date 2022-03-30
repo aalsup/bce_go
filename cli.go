@@ -5,8 +5,10 @@ import (
 	"errors"
 	"flag"
 	"github.com/google/uuid"
+	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 )
 
@@ -63,10 +65,6 @@ func processCli() error {
 	return err
 }
 
-func processImportJsonUrl(url string) error {
-	return nil
-}
-
 func processImportSqlite(filename string) error {
 	// open the source database
 	srcConn, err := DbOpen(filename)
@@ -106,6 +104,10 @@ func processImportSqlite(filename string) error {
 		if err != nil {
 			return err
 		}
+		err = DbDeleteCommand(destConn, cmd.Name)
+		if err != nil {
+			return err
+		}
 		err = DbInsertCommand(destConn, *cmd)
 		if err != nil {
 			return err
@@ -134,12 +136,60 @@ func processImportJsonFile(filename string) error {
 
 	// convert the map into data model objects
 	cmdData := mapData["command"].(map[string]interface{})
-	_, err = createBceCommandFromJson(nil, cmdData)
+	cmd, err := createBceCommandFromJson(nil, cmdData)
+	if err != nil {
+		return err
+	}
+
+	// open the dest database
+	destConn, err := DbOpen(DbFilename)
+	if err != nil {
+		return err
+	}
+	defer DbClose(destConn)
+
+	// explicitly start a transaction
+	_, err = destConn.Exec("BEGIN TRANSACTION;")
+	if err != nil {
+		return err
+	}
+
+	// delete the command (cascading) if it exists
+	err = DbDeleteCommand(destConn, cmd.Name)
+	if err != nil {
+		return err
+	}
+
+	// insert the command data
+	err = DbInsertCommand(destConn, *cmd)
+	if err != nil {
+		return err
+	}
+
+	// commit the transaction
+	_, err = destConn.Exec("COMMIT;")
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func processImportJsonUrl(url string) error {
+	jsonFile, err := os.CreateTemp("", "")
+	if err != nil {
+		return err
+	}
+	filename := jsonFile.Name()
+	// defers are unwound in LIFO
+	defer os.Remove(filename)
+	defer jsonFile.Close()
+
+	err = downloadFile(url, jsonFile)
+	if err != nil {
+		return err
+	}
+	return processImportJsonFile(filename)
 }
 
 func createBceCommandFromJson(parentUuid *string, data map[string]interface{}) (*BceCommand, error) {
@@ -187,7 +237,7 @@ func createBceCommandFromJson(parentUuid *string, data map[string]interface{}) (
 		subCmds = append(subCmds, *subCmd)
 	}
 
-	cmd := BceCommand{Uuid: cmdUuid, Name: name, ParentCmdUuid: parentUuid, Args: args}
+	cmd := BceCommand{Uuid: cmdUuid, Name: name, ParentCmdUuid: parentUuid, Args: args, SubCommands: subCmds}
 	return &cmd, nil
 }
 
@@ -339,4 +389,17 @@ func processExportJson(commandName string, filename string) error {
 
 func showUsage() {
 
+}
+
+func downloadFile(url string, f *os.File) error {
+	// get the data
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// write the data to the file
+	_, err = io.Copy(f, resp.Body)
+	return err
 }
