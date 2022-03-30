@@ -121,11 +121,6 @@ func processCompletion() error {
 	return nil
 }
 
-func processCli() error {
-	err := processCliImpl()
-	return err
-}
-
 func printCommandTree(cmd *BceCommand, level int) {
 	// indent
 	for i := 0; i < level; i++ {

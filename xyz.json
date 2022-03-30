@@ -1,0 +1,103 @@
+{
+  "command": {
+    "name": "yada",
+    "aliases": [
+      {
+        "name": "zada"
+      }
+    ],
+    "sub_commands": [
+      {
+        "name": "get",
+        "aliases": null,
+        "sub_commands": [
+          {
+            "name": "pods",
+            "aliases": [
+              {
+                "name": "po"
+              },
+              {
+                "name": "pod"
+              }
+            ],
+            "sub_commands": null,
+            "args": null
+          },
+          {
+            "name": "replicasets",
+            "aliases": [
+              {
+                "name": "replicaset"
+              },
+              {
+                "name": "rs"
+              }
+            ],
+            "sub_commands": null,
+            "args": null
+          }
+        ],
+        "args": [
+          {
+            "arg_type": "TEXT",
+            "description": "Build a kustomization target from a directory or URL",
+            "long_name": "--kustomize",
+            "short_name": "-k",
+            "opts": null
+          },
+          {
+            "arg_type": "TEXT",
+            "description": "comma separated list of labels to be presented as columns",
+            "long_name": "--label-columns",
+            "short_name": "-L",
+            "opts": null
+          },
+          {
+            "arg_type": "OPTION",
+            "description": "Output format",
+            "long_name": "--output",
+            "short_name": "-o",
+            "opts": [
+              {
+                "name": "json"
+              },
+              {
+                "name": "name"
+              },
+              {
+                "name": "wide"
+              },
+              {
+                "name": "yaml"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "args": [
+      {
+        "arg_type": "NONE",
+        "description": "Use all namespaces",
+        "long_name": "--all-namespaces",
+        "short_name": "-A",
+        "opts": null
+      },
+      {
+        "arg_type": "FILE",
+        "description": "read/write data using the provided file",
+        "long_name": "--file",
+        "short_name": "-f",
+        "opts": null
+      },
+      {
+        "arg_type": "TEXT",
+        "description": "Use the specified namespace",
+        "long_name": "--namespace",
+        "short_name": "-n",
+        "opts": null
+      }
+    ]
+  }
+}

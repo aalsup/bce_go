@@ -38,6 +38,13 @@ const sqlReadCommandOpts = `
 	ORDER BY co.Name
 `
 
+const sqlReadRootCommandNames = `
+	SELECT c.name
+	FROM command c
+	WHERE c.parent_cmd IS NULL
+	ORDER BY c.name
+`
+
 const sqlWriteCommand = `
 	INSERT INTO command
 		(uuid, name, parent_cmd)
@@ -273,6 +280,33 @@ func DbQueryCommandOpts(conn *sql.DB, argUuid string) ([]BceCommandOpt, error) {
 	}
 
 	return opts, nil
+}
+
+func DbQueryRootCommandNames(conn *sql.DB) ([]string, error) {
+	var cmdNames []string
+
+	stmt, err := conn.Prepare(sqlReadRootCommandNames)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var cmdName string
+		err = rows.Scan(&cmdName)
+		if err != nil {
+			return nil, err
+		}
+		cmdNames = append(cmdNames, cmdName)
+	}
+
+	return cmdNames, nil
 }
 
 func DbInsertCommand(conn *sql.DB, cmd BceCommand) error {
