@@ -80,7 +80,7 @@ func processImportSqlite(filename string) error {
 	}
 
 	// open the dest database
-	destConn, err := DBOpen(DbFilename)
+	destConn, err := DBOpen(DBFilename)
 	if err != nil {
 		return err
 	}
@@ -146,7 +146,7 @@ func processImportJsonFile(filename string) error {
 	}
 
 	// open the dest database
-	destConn, err := DBOpen(DbFilename)
+	destConn, err := DBOpen(DBFilename)
 	if err != nil {
 		return err
 	}
@@ -305,7 +305,7 @@ func createBceCommandAliasFromJson(cmdUuid string, data map[string]interface{}) 
 
 func processExportSqlite(commandName string, filename string) error {
 	// open the source database
-	srcConn, err := DBOpen(DbFilename)
+	srcConn, err := DBOpen(DBFilename)
 	if err != nil {
 		return err
 	}
@@ -360,7 +360,7 @@ func processExportSqlite(commandName string, filename string) error {
 
 func processExportJson(commandName string, filename string) error {
 	// open the source database
-	srcConn, err := DBOpen(DbFilename)
+	srcConn, err := DBOpen(DBFilename)
 	if err != nil {
 		return err
 	}

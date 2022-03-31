@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-const DbFilename = "completion.db"
+const DBFilename = "completion.db"
 
 func main() {
 	var err error
@@ -35,7 +35,7 @@ func processCompletion() error {
 	var sqliteVersion, _, _ = sqlite3.Version()
 	fmt.Println("SQLite version:", sqliteVersion)
 
-	conn, err := DBOpen(DbFilename)
+	conn, err := DBOpen(DBFilename)
 	if err != nil {
 		return err
 	}
