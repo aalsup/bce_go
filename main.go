@@ -28,10 +28,6 @@ func main() {
 }
 
 func processCompletion() error {
-	//var command_name string
-	//var current_word string
-	//var previous_word string
-
 	var sqliteVersion, _, _ = sqlite3.Version()
 	fmt.Println("SQLite version:", sqliteVersion)
 
@@ -53,7 +49,7 @@ func processCompletion() error {
 		}
 		schemaVersion, err = DBGetSchemaVersion(conn)
 	}
-	if schemaVersion != DbSchemaVersion {
+	if schemaVersion != DBSchemaVersion {
 		err := errors.New("schema version mismatch")
 		return err
 	}

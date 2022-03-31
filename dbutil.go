@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-const DbSchemaVersion = 1
+const DBSchemaVersion = 1
 
 const sqlCreateCompletionCommand = ` 
 	CREATE TABLE IF NOT EXISTS command (
@@ -127,7 +127,7 @@ func DBCreateSchema(conn *sql.DB) error {
 		return err
 	}
 
-	query := "PRAGMA user_version = " + strconv.Itoa(DbSchemaVersion) + ";"
+	query := "PRAGMA user_version = " + strconv.Itoa(DBSchemaVersion) + ";"
 	_, err = conn.Exec(query)
 	return err
 }
