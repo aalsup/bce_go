@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/mattn/go-sqlite3"
+	"log"
 	"os"
 )
 
@@ -20,6 +21,8 @@ func main() {
 	}
 
 	if err != nil {
+		errLog := log.New(os.Stderr, "", 0)
+		errLog.Println(err)
 		os.Exit(1)
 	}
 }

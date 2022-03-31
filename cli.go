@@ -104,17 +104,21 @@ func processImportSqlite(filename string) error {
 		if err != nil {
 			return err
 		}
-		err = DBDeleteCommand(destConn, cmd.Name)
-		if err != nil {
-			return err
-		}
-		err = cmd.InsertDB(destConn)
-		if err != nil {
-			return err
+		if cmd != nil {
+			// delete the command from dest (cascade)
+			err = DBDeleteCommand(destConn, cmd.Name)
+			if err != nil {
+				return err
+			}
+			// insert the command into dest
+			err = cmd.InsertDB(destConn)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
-	// commit the transaction
+	// commit the transactions
 	_, err = destConn.Exec("COMMIT;")
 	if err != nil {
 		return err

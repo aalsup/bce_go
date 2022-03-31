@@ -134,7 +134,7 @@ func DBQueryCommand(conn *sql.DB, cmdName string) (*BceCommand, error) {
 		}
 	}
 
-	cmd.Aliases, err = cmd.QueryCommandAliases(conn)
+	cmd.Aliases, err = cmd.QueryAliases(conn)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +142,7 @@ func DBQueryCommand(conn *sql.DB, cmdName string) (*BceCommand, error) {
 	if err != nil {
 		return nil, err
 	}
-	cmd.Args, err = cmd.QueryCommandArgs(conn)
+	cmd.Args, err = cmd.QueryArgs(conn)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +150,7 @@ func DBQueryCommand(conn *sql.DB, cmdName string) (*BceCommand, error) {
 	return &cmd, nil
 }
 
-func (cmd BceCommand) QueryCommandAliases(conn *sql.DB) ([]BceCommandAlias, error) {
+func (cmd BceCommand) QueryAliases(conn *sql.DB) ([]BceCommandAlias, error) {
 	var aliases []BceCommandAlias
 
 	stmt, err := conn.Prepare(sqlReadCommandAliases)
@@ -200,13 +200,13 @@ func (cmd BceCommand) QuerySubCommands(conn *sql.DB) ([]BceCommand, error) {
 		}
 
 		// populate child Aliases
-		subCmd.Aliases, err = subCmd.QueryCommandAliases(conn)
+		subCmd.Aliases, err = subCmd.QueryAliases(conn)
 		if err != nil {
 			return nil, err
 		}
 
 		// populate child Args
-		subCmd.Args, err = subCmd.QueryCommandArgs(conn)
+		subCmd.Args, err = subCmd.QueryArgs(conn)
 		if err != nil {
 			return nil, err
 		}
@@ -223,7 +223,7 @@ func (cmd BceCommand) QuerySubCommands(conn *sql.DB) ([]BceCommand, error) {
 	return subCmds, nil
 }
 
-func (cmd BceCommand) QueryCommandArgs(conn *sql.DB) ([]BceCommandArg, error) {
+func (cmd BceCommand) QueryArgs(conn *sql.DB) ([]BceCommandArg, error) {
 	var args []BceCommandArg
 
 	stmt, err := conn.Prepare(sqlReadCommandArgs)
@@ -245,7 +245,7 @@ func (cmd BceCommand) QueryCommandArgs(conn *sql.DB) ([]BceCommandArg, error) {
 		if err != nil {
 			return nil, err
 		}
-		arg.Opts, err = arg.QueryCommandOpts(conn)
+		arg.Opts, err = arg.QueryOpts(conn)
 		if err != nil {
 			return nil, err
 		}
@@ -255,7 +255,7 @@ func (cmd BceCommand) QueryCommandArgs(conn *sql.DB) ([]BceCommandArg, error) {
 	return args, nil
 }
 
-func (arg BceCommandArg) QueryCommandOpts(conn *sql.DB) ([]BceCommandOpt, error) {
+func (arg BceCommandArg) QueryOpts(conn *sql.DB) ([]BceCommandOpt, error) {
 	var opts []BceCommandOpt
 
 	stmt, err := conn.Prepare(sqlReadCommandOpts)
