@@ -68,29 +68,11 @@ func processCompletion() error {
 	fmt.Println("current word:", input.CurrentWord)
 	fmt.Println("previous word:", input.PreviousWord)
 
-	// explicitly start a transaction, since this will be done automatically (per statement) otherwise
-	/*
-		_, err = conn.Exec("BEGIN TRANSACTION;")
-		if err != nil {
-			log.Fatal("Unable to begin transaction. err:", err)
-			return 1
-		}
-	*/
-
 	// search for the command directly (load all descendents)
 	cmd, err := DBQueryCommand(conn, *input.CmdName)
 	if err != nil {
 		return err
 	}
-
-	// end the transaction
-	/*
-		_, err = conn.Exec("COMMIT;")
-		if err != nil {
-			log.Fatal("Unable to commit transaction. err:", err)
-			return 1
-		}
-	*/
 
 	fmt.Println("\nCommand Tree (Database)")
 	printCommandTree(cmd, 0)
