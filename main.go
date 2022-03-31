@@ -32,23 +32,23 @@ func processCompletion() error {
 	var sqliteVersion, _, _ = sqlite3.Version()
 	fmt.Println("SQLite version:", sqliteVersion)
 
-	conn, err := DbOpen(DbFilename)
+	conn, err := DBOpen(DbFilename)
 	if err != nil {
 		return err
 	}
-	defer DbClose(conn)
+	defer DBClose(conn)
 
-	schemaVersion, err := DbGetSchemaVersion(conn)
+	schemaVersion, err := DBGetSchemaVersion(conn)
 	if err != nil {
 		return err
 	}
 	if schemaVersion == 0 {
 		// create the schema
-		err = DbCreateSchema(conn)
+		err = DBCreateSchema(conn)
 		if err != nil {
 			return err
 		}
-		schemaVersion, err = DbGetSchemaVersion(conn)
+		schemaVersion, err = DBGetSchemaVersion(conn)
 	}
 	if schemaVersion != DbSchemaVersion {
 		err := errors.New("schema version mismatch")
@@ -79,7 +79,7 @@ func processCompletion() error {
 	*/
 
 	// search for the command directly (load all descendents)
-	cmd, err := DbQueryCommand(conn, *input.CmdName)
+	cmd, err := DBQueryCommand(conn, *input.CmdName)
 	if err != nil {
 		return err
 	}
@@ -97,17 +97,17 @@ func processCompletion() error {
 	printCommandTree(cmd, 0)
 
 	// remove non-relevant command data
-	*cmd = pruneCommand(*cmd, *input)
+	*cmd = cmd.prune(*input)
 
 	fmt.Println("\nCommand tree (Pruned)")
 	printCommandTree(cmd, 0)
 
 	// build the command recommendations
 	var hasRequired = true
-	var recommendationList = CollectRequiredRecommendations(*cmd, *input)
+	var recommendationList = cmd.CollectRequiredRecommendations(*input)
 	if len(recommendationList) == 0 {
 		hasRequired = false
-		recommendationList = CollectOptionalRecommendations(*cmd, *input)
+		recommendationList = cmd.CollectOptionalRecommendations(*input)
 	}
 
 	if hasRequired {

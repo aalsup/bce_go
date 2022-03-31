@@ -67,11 +67,11 @@ func processCli() error {
 
 func processImportSqlite(filename string) error {
 	// open the source database
-	srcConn, err := DbOpen(filename)
+	srcConn, err := DBOpen(filename)
 	if err != nil {
 		return err
 	}
-	defer DbClose(srcConn)
+	defer DBClose(srcConn)
 
 	// explicitly start a transaction, since this will be done automatically (per statement) otherwise
 	_, err = srcConn.Exec("BEGIN TRANSACTION;")
@@ -80,11 +80,11 @@ func processImportSqlite(filename string) error {
 	}
 
 	// open the dest database
-	destConn, err := DbOpen(DbFilename)
+	destConn, err := DBOpen(DbFilename)
 	if err != nil {
 		return err
 	}
-	defer DbClose(destConn)
+	defer DBClose(destConn)
 
 	// explicitly start a transaction
 	_, err = destConn.Exec("BEGIN TRANSACTION;")
@@ -93,22 +93,22 @@ func processImportSqlite(filename string) error {
 	}
 
 	// get a list of the top-level commands in source database
-	cmdNames, err := DbQueryRootCommandNames(srcConn)
+	cmdNames, err := DBQueryRootCommandNames(srcConn)
 	if err != nil {
 		return err
 	}
 
 	// load each command from src and push to dest
 	for _, cmdName := range cmdNames {
-		cmd, err := DbQueryCommand(srcConn, cmdName)
+		cmd, err := DBQueryCommand(srcConn, cmdName)
 		if err != nil {
 			return err
 		}
-		err = DbDeleteCommand(destConn, cmd.Name)
+		err = DBDeleteCommand(destConn, cmd.Name)
 		if err != nil {
 			return err
 		}
-		err = DbInsertCommand(destConn, *cmd)
+		err = cmd.InsertDB(destConn)
 		if err != nil {
 			return err
 		}
@@ -142,11 +142,11 @@ func processImportJsonFile(filename string) error {
 	}
 
 	// open the dest database
-	destConn, err := DbOpen(DbFilename)
+	destConn, err := DBOpen(DbFilename)
 	if err != nil {
 		return err
 	}
-	defer DbClose(destConn)
+	defer DBClose(destConn)
 
 	// explicitly start a transaction
 	_, err = destConn.Exec("BEGIN TRANSACTION;")
@@ -155,13 +155,13 @@ func processImportJsonFile(filename string) error {
 	}
 
 	// delete the command (cascading) if it exists
-	err = DbDeleteCommand(destConn, cmd.Name)
+	err = DBDeleteCommand(destConn, cmd.Name)
 	if err != nil {
 		return err
 	}
 
 	// insert the command data
-	err = DbInsertCommand(destConn, *cmd)
+	err = cmd.InsertDB(destConn)
 	if err != nil {
 		return err
 	}
@@ -301,11 +301,11 @@ func createBceCommandAliasFromJson(cmdUuid string, data map[string]interface{}) 
 
 func processExportSqlite(commandName string, filename string) error {
 	// open the source database
-	srcConn, err := DbOpen(DbFilename)
+	srcConn, err := DBOpen(DbFilename)
 	if err != nil {
 		return err
 	}
-	defer DbClose(srcConn)
+	defer DBClose(srcConn)
 
 	// explicitly start a transaction, since this will be done automatically (per statement) otherwise
 	_, err = srcConn.Exec("BEGIN TRANSACTION;")
@@ -314,7 +314,7 @@ func processExportSqlite(commandName string, filename string) error {
 	}
 
 	// load the command hierarchy
-	cmd, err := DbQueryCommand(srcConn, commandName)
+	cmd, err := DBQueryCommand(srcConn, commandName)
 	if err != nil {
 		return err
 	}
@@ -324,14 +324,14 @@ func processExportSqlite(commandName string, filename string) error {
 	if err == nil {
 		err = os.Remove(filename)
 	}
-	destConn, err := DbOpen(filename)
+	destConn, err := DBOpen(filename)
 	if err != nil {
 		return err
 	}
-	defer DbClose(destConn)
+	defer DBClose(destConn)
 
 	// create the schema
-	err = DbCreateSchema(destConn)
+	err = DBCreateSchema(destConn)
 	if err != nil {
 		return err
 	}
@@ -343,7 +343,7 @@ func processExportSqlite(commandName string, filename string) error {
 	}
 
 	// insert the BceCommand (recursively to children)
-	err = DbInsertCommand(destConn, *cmd)
+	err = cmd.InsertDB(destConn)
 	if err != nil {
 		return err
 	}
@@ -356,7 +356,7 @@ func processExportSqlite(commandName string, filename string) error {
 
 func processExportJson(commandName string, filename string) error {
 	// open the source database
-	srcConn, err := DbOpen(DbFilename)
+	srcConn, err := DBOpen(DbFilename)
 	if err != nil {
 		return err
 	}
@@ -368,7 +368,7 @@ func processExportJson(commandName string, filename string) error {
 	}
 
 	// load the command hierarchy
-	cmd, err := DbQueryCommand(srcConn, commandName)
+	cmd, err := DBQueryCommand(srcConn, commandName)
 	if err != nil {
 		return err
 	}

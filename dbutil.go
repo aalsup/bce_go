@@ -64,7 +64,7 @@ const sqlCreateCompletionCommandOpt = `
         ON command_opt (cmd_arg_uuid, Name); 
 `
 
-func DbOpen(filename string) (*sql.DB, error) {
+func DBOpen(filename string) (*sql.DB, error) {
 	conn, err := sql.Open("sqlite3", filename)
 	if err != nil {
 		return nil, err
@@ -85,11 +85,11 @@ func DbOpen(filename string) (*sql.DB, error) {
 	return conn, nil
 }
 
-func DbClose(conn *sql.DB) {
+func DBClose(conn *sql.DB) {
 	_ = conn.Close()
 }
 
-func DbGetSchemaVersion(conn *sql.DB) (int, error) {
+func DBGetSchemaVersion(conn *sql.DB) (int, error) {
 	var version int
 
 	row, err := conn.Query("PRAGMA user_version;")
@@ -106,7 +106,7 @@ func DbGetSchemaVersion(conn *sql.DB) (int, error) {
 	return version, nil
 }
 
-func DbCreateSchema(conn *sql.DB) error {
+func DBCreateSchema(conn *sql.DB) error {
 	_, err := conn.Exec(sqlCreateCompletionCommand)
 	if err != nil {
 		return err

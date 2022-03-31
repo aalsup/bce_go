@@ -2,17 +2,17 @@ package main
 
 import "log"
 
-func pruneCommand(cmd BceCommand, input BashInput) BceCommand {
+func (cmd BceCommand) prune(input BashInput) BceCommand {
 	// build the list of words from the command CmdLine
 	words := BashInputToList(input.CmdLine, BashMaxLineSize)
 
-	cmd = pruneArguments(cmd, words)
-	cmd = pruneSubCommands(cmd, words)
+	cmd = cmd.pruneArguments(words)
+	cmd = cmd.pruneSubCommands(words)
 
 	return cmd
 }
 
-func pruneSubCommands(cmd BceCommand, words []string) BceCommand {
+func (cmd BceCommand) pruneSubCommands(words []string) BceCommand {
 	var removeIdx []int
 	// prune sibling sub-commands
 	for i, subCmd := range cmd.SubCommands {
@@ -58,8 +58,8 @@ func pruneSubCommands(cmd BceCommand, words []string) BceCommand {
 	// recurse over remaining sub-cmds
 	removeIdx = nil
 	for i, subCmd := range cmd.SubCommands {
-		subCmd = pruneArguments(subCmd, words)
-		subCmd = pruneSubCommands(subCmd, words)
+		subCmd = subCmd.pruneArguments(words)
+		subCmd = subCmd.pruneSubCommands(words)
 
 		// if sub-cmd is present and has no children, it has been used and should be removed
 		if subCmd.IsPresentOnCmdLine && (len(subCmd.SubCommands) == 0) && (len(subCmd.Args) == 0) {
@@ -87,7 +87,7 @@ func pruneSubCommands(cmd BceCommand, words []string) BceCommand {
 	return cmd
 }
 
-func pruneArguments(cmd BceCommand, words []string) BceCommand {
+func (cmd BceCommand) pruneArguments(words []string) BceCommand {
 	var removeIdx []int
 	for i, arg := range cmd.Args {
 		// check if arg is in word list
@@ -132,11 +132,11 @@ func pruneArguments(cmd BceCommand, words []string) BceCommand {
 	return cmd
 }
 
-func CollectRequiredRecommendations(cmd BceCommand, input BashInput) []string {
+func (cmd BceCommand) CollectRequiredRecommendations(input BashInput) []string {
 	var results []string
 
 	// if a current argument is selected, its options should be displayed 1st
-	arg := GetCurrentArg(cmd, *input.CurrentWord)
+	arg := cmd.GetCurrentArg(*input.CurrentWord)
 	if arg == nil {
 		return results
 	}
@@ -150,7 +150,7 @@ func CollectRequiredRecommendations(cmd BceCommand, input BashInput) []string {
 	return results
 }
 
-func CollectOptionalRecommendations(cmd BceCommand, input BashInput) []string {
+func (cmd BceCommand) CollectOptionalRecommendations(input BashInput) []string {
 	var results []string
 
 	// collect all sub-cmds
@@ -170,7 +170,7 @@ func CollectOptionalRecommendations(cmd BceCommand, input BashInput) []string {
 			}
 			results = append(results, recommendation)
 		}
-		subResults := CollectOptionalRecommendations(subCmd, input)
+		subResults := subCmd.CollectOptionalRecommendations(input)
 		results = append(results, subResults...)
 	}
 
@@ -198,16 +198,7 @@ func CollectOptionalRecommendations(cmd BceCommand, input BashInput) []string {
 	return results
 }
 
-func contains(s []string, str string) bool {
-	for _, v := range s {
-		if v == str {
-			return true
-		}
-	}
-	return false
-}
-
-func GetCurrentArg(cmd BceCommand, currentWord string) *BceCommandArg {
+func (cmd BceCommand) GetCurrentArg(currentWord string) *BceCommandArg {
 	var foundArg *BceCommandArg = nil
 
 	for _, arg := range cmd.Args {
@@ -225,10 +216,19 @@ func GetCurrentArg(cmd BceCommand, currentWord string) *BceCommandArg {
 
 	// recurse for sub-commands
 	for _, subCmd := range cmd.SubCommands {
-		foundArg = GetCurrentArg(subCmd, currentWord)
+		foundArg = subCmd.GetCurrentArg(currentWord)
 		if foundArg != nil {
 			break
 		}
 	}
 	return foundArg
+}
+
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+	return false
 }
