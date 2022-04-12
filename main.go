@@ -78,17 +78,17 @@ func processCompletion() error {
 	printCommandTree(cmd, 0)
 
 	// remove non-relevant command data
-	*cmd = cmd.prune(*input)
+	cmd.prune(input)
 
 	fmt.Println("\nCommand tree (Pruned)")
 	printCommandTree(cmd, 0)
 
 	// build the command recommendations
 	var hasRequired = true
-	var recommendationList = cmd.CollectRequiredRecommendations(*input)
+	var recommendationList = cmd.CollectRequiredRecommendations(input)
 	if len(recommendationList) == 0 {
 		hasRequired = false
-		recommendationList = cmd.CollectOptionalRecommendations(*input)
+		recommendationList = cmd.CollectOptionalRecommendations(input)
 	}
 
 	if hasRequired {

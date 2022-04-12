@@ -134,15 +134,15 @@ func DBQueryCommand(conn *sql.DB, cmdName string) (*BceCommand, error) {
 		}
 	}
 
-	cmd.Aliases, err = cmd.QueryAliases(conn)
+	err = cmd.QueryAliases(conn)
 	if err != nil {
 		return nil, err
 	}
-	cmd.SubCommands, err = cmd.QuerySubCommands(conn)
+	err = cmd.QuerySubCommands(conn)
 	if err != nil {
 		return nil, err
 	}
-	cmd.Args, err = cmd.QueryArgs(conn)
+	err = cmd.QueryArgs(conn)
 	if err != nil {
 		return nil, err
 	}
@@ -150,18 +150,18 @@ func DBQueryCommand(conn *sql.DB, cmdName string) (*BceCommand, error) {
 	return &cmd, nil
 }
 
-func (cmd BceCommand) QueryAliases(conn *sql.DB) ([]BceCommandAlias, error) {
-	var aliases []BceCommandAlias
+func (cmd *BceCommand) QueryAliases(conn *sql.DB) error {
+	cmd.Aliases = nil
 
 	stmt, err := conn.Prepare(sqlReadCommandAliases)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer stmt.Close()
 
 	rows, err := stmt.Query(cmd.Uuid)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer rows.Close()
 
@@ -169,26 +169,26 @@ func (cmd BceCommand) QueryAliases(conn *sql.DB) ([]BceCommandAlias, error) {
 		var alias BceCommandAlias
 		err = rows.Scan(&alias.Uuid, &alias.CmdUuid, &alias.Name)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		aliases = append(aliases, alias)
+		cmd.Aliases = append(cmd.Aliases, alias)
 	}
 
-	return aliases, nil
+	return nil
 }
 
-func (cmd BceCommand) QuerySubCommands(conn *sql.DB) ([]BceCommand, error) {
-	var subCmds []BceCommand
+func (cmd *BceCommand) QuerySubCommands(conn *sql.DB) error {
+	cmd.SubCommands = nil
 
 	stmt, err := conn.Prepare(sqlReadSubCommands)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer stmt.Close()
 
 	rows, err := stmt.Query(cmd.Uuid)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer rows.Close()
 
@@ -196,45 +196,45 @@ func (cmd BceCommand) QuerySubCommands(conn *sql.DB) ([]BceCommand, error) {
 		var subCmd BceCommand
 		err = rows.Scan(&subCmd.Uuid, &subCmd.Name, &subCmd.ParentCmdUuid)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		// populate child Aliases
-		subCmd.Aliases, err = subCmd.QueryAliases(conn)
+		err = subCmd.QueryAliases(conn)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		// populate child Args
-		subCmd.Args, err = subCmd.QueryArgs(conn)
+		err = subCmd.QueryArgs(conn)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		// populate child sub-cmds
-		subCmd.SubCommands, err = subCmd.QuerySubCommands(conn)
+		err = subCmd.QuerySubCommands(conn)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		subCmds = append(subCmds, subCmd)
+		cmd.SubCommands = append(cmd.SubCommands, subCmd)
 	}
 
-	return subCmds, nil
+	return nil
 }
 
-func (cmd BceCommand) QueryArgs(conn *sql.DB) ([]BceCommandArg, error) {
-	var args []BceCommandArg
+func (cmd *BceCommand) QueryArgs(conn *sql.DB) error {
+	cmd.Args = nil
 
 	stmt, err := conn.Prepare(sqlReadCommandArgs)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer stmt.Close()
 
 	rows, err := stmt.Query(cmd.Uuid)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer rows.Close()
 
@@ -243,30 +243,30 @@ func (cmd BceCommand) QueryArgs(conn *sql.DB) ([]BceCommandArg, error) {
 		// ca.Uuid, ca.cmd_uuid, ca.arg_type, ca.Description, ca.long_name, ca.short_name
 		err := rows.Scan(&arg.Uuid, &arg.CmdUuid, &arg.ArgType, &arg.Description, &arg.LongName, &arg.ShortName)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		arg.Opts, err = arg.QueryOpts(conn)
+		err = arg.QueryOpts(conn)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		args = append(args, arg)
+		cmd.Args = append(cmd.Args, arg)
 	}
 
-	return args, nil
+	return nil
 }
 
-func (arg BceCommandArg) QueryOpts(conn *sql.DB) ([]BceCommandOpt, error) {
-	var opts []BceCommandOpt
+func (arg *BceCommandArg) QueryOpts(conn *sql.DB) error {
+	arg.Opts = nil
 
 	stmt, err := conn.Prepare(sqlReadCommandOpts)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer stmt.Close()
 
 	rows, err := stmt.Query(arg.Uuid)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer rows.Close()
 
@@ -274,12 +274,12 @@ func (arg BceCommandArg) QueryOpts(conn *sql.DB) ([]BceCommandOpt, error) {
 		var opt BceCommandOpt
 		err := rows.Scan(&opt.Uuid, &opt.ArgUuid, &opt.Name)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		opts = append(opts, opt)
+		arg.Opts = append(arg.Opts, opt)
 	}
 
-	return opts, nil
+	return nil
 }
 
 func DBQueryRootCommandNames(conn *sql.DB) ([]string, error) {
@@ -309,7 +309,7 @@ func DBQueryRootCommandNames(conn *sql.DB) ([]string, error) {
 	return cmdNames, nil
 }
 
-func (cmd BceCommand) InsertDB(conn *sql.DB) error {
+func (cmd *BceCommand) InsertDB(conn *sql.DB) error {
 	// insert the command
 	stmt, err := conn.Prepare(sqlWriteCommand)
 	if err == nil {
@@ -339,7 +339,7 @@ func (cmd BceCommand) InsertDB(conn *sql.DB) error {
 	return err
 }
 
-func (alias BceCommandAlias) InsertDB(conn *sql.DB) error {
+func (alias *BceCommandAlias) InsertDB(conn *sql.DB) error {
 	// insert the alias
 	stmt, err := conn.Prepare(sqlWriteCommandAlias)
 	if err == nil {
@@ -349,7 +349,7 @@ func (alias BceCommandAlias) InsertDB(conn *sql.DB) error {
 	return err
 }
 
-func (arg BceCommandArg) InsertDB(conn *sql.DB) error {
+func (arg *BceCommandArg) InsertDB(conn *sql.DB) error {
 	// insert the arg
 	stmt, err := conn.Prepare(sqlWriteCommandArg)
 	if err == nil {
@@ -370,7 +370,7 @@ func (arg BceCommandArg) InsertDB(conn *sql.DB) error {
 	return err
 }
 
-func (opt BceCommandOpt) InsertDB(conn *sql.DB) error {
+func (opt *BceCommandOpt) InsertDB(conn *sql.DB) error {
 	// insert the opt
 	stmt, err := conn.Prepare(sqlWriteCommandOpt)
 	if err == nil {
