@@ -3,39 +3,39 @@ package main
 import "database/sql"
 
 const sqlReadCommand = `
-	SELECT c.Uuid, c.Name, c.parent_cmd
+	SELECT c.uuid, c.name, c.parent_cmd
 	FROM command c
-	JOIN command_alias a ON a.cmd_uuid = c.Uuid
-	WHERE c.Name = ?1 OR a.Name = ?2
+	JOIN command_alias a ON a.cmd_uuid = c.uuid
+	WHERE c.name = ?1 OR a.name = ?2
 `
 
 const sqlReadCommandAliases = `
-	SELECT a.Uuid, a.cmd_uuid, a.Name 
+	SELECT a.uuid, a.cmd_uuid, a.name 
 	FROM command_alias a
 	WHERE a.cmd_uuid = ?1
 `
 
 const sqlReadSubCommands = `
-	SELECT c.Uuid, c.Name, c.parent_cmd
+	SELECT c.uuid, c.name, c.parent_cmd
 	FROM command c
 	WHERE c.parent_cmd = ?1
-	ORDER BY c.Name
+	ORDER BY c.name
 `
 
 const sqlReadCommandArgs = `
-	SELECT ca.Uuid, ca.cmd_uuid, ca.arg_type, ca.Description, ca.long_name, ca.short_name
+	SELECT ca.uuid, ca.cmd_uuid, ca.arg_type, ca.description, ca.long_name, ca.short_name
 	FROM command_arg ca
-	JOIN command c ON c.Uuid = ca.cmd_uuid
-	WHERE c.Uuid = ?1
+	JOIN command c ON c.uuid = ca.cmd_uuid
+	WHERE c.uuid = ?1
 	ORDER BY ca.long_name, ca.short_name
 `
 
 const sqlReadCommandOpts = `
-	SELECT co.Uuid, co.cmd_arg_uuid, co.Name
+	SELECT co.uuid, co.cmd_arg_uuid, co.name
 	FROM command_opt co
-	JOIN command_arg ca ON ca.Uuid = co.cmd_arg_uuid
-	WHERE ca.Uuid = ?1
-	ORDER BY co.Name
+	JOIN command_arg ca ON ca.uuid = co.cmd_arg_uuid
+	WHERE ca.uuid = ?1
+	ORDER BY co.name
 `
 
 const sqlReadRootCommandNames = `
